@@ -59,11 +59,7 @@ def extract_asset_id(url: str) -> str:
 
 async def wait_for_links(task_id: str, url: str) -> tuple[str, Optional[str]]:
     await client.connect()
-    message = await client.send_message(BOT_USERNAME, f"{url}?taskid={task_id}")
-    main_link = None
-    license_link = None
-    async for resp in client.iter_messages(BOT_USERNAME, min_id=message.id):
-        text = resp.text or ""
+
         if 'исходники успешно получены' in text.lower():
             main_link = resp.reply_markup.rows[0].buttons[0].url if resp.reply_markup else None
         if 'лицензия успешно скачана' in text.lower():
@@ -84,6 +80,7 @@ async def download_to_tmp(url: str, prefix: str) -> str:
         resp.raise_for_status()
         with open(path, 'wb') as f:
             f.write(resp.content)
+
     return path
 
 
@@ -99,10 +96,12 @@ async def process(req: ProcessRequest):
         asset_id = extract_asset_id(str(req.url))
         main_path = await download_to_tmp(main_link, 'main')
         main_key = upload_to_s3(main_path, f"{asset_id}/main")
+
         license_key = None
         if license_link:
             license_path = await download_to_tmp(license_link, 'lic')
             license_key = upload_to_s3(license_path, f"{asset_id}/license")
+
         return {
             'taskId': req.task_id,
             'mainFileKey': main_key,
@@ -111,6 +110,7 @@ async def process(req: ProcessRequest):
     except Exception as e:
         logger.exception('Processing failed')
         raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == '__main__':
     import uvicorn
