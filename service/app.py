@@ -59,11 +59,16 @@ def extract_asset_id(url: str) -> str:
 
 async def wait_for_links(task_id: str, url: str) -> tuple[str, Optional[str]]:
     await client.connect()
-    message = await client.send_message(BOT_USERNAME, f"{url}?taskid={task_id}")
+    full_url = f"{url}?taskid={task_id}"
+    logger.info("Sending URL %s to bot", full_url)
+    message = await client.send_message(BOT_USERNAME, full_url)
+
     main_link = None
     license_link = None
+
     async for resp in client.iter_messages(BOT_USERNAME, min_id=message.id):
         text = resp.text or ""
+        logger.debug("Bot message: %s", text.replace('\n', ' ')[:200])
         if 'исходники успешно получены' in text.lower():
             main_link = resp.reply_markup.rows[0].buttons[0].url if resp.reply_markup else None
         if 'лицензия успешно скачана' in text.lower():
@@ -84,6 +89,7 @@ async def download_to_tmp(url: str, prefix: str) -> str:
         resp.raise_for_status()
         with open(path, 'wb') as f:
             f.write(resp.content)
+    logger.info("Downloaded %s to %s", url, path)
     return path
 
 
@@ -99,10 +105,12 @@ async def process(req: ProcessRequest):
         asset_id = extract_asset_id(str(req.url))
         main_path = await download_to_tmp(main_link, 'main')
         main_key = upload_to_s3(main_path, f"{asset_id}/main")
+        logger.info("Uploaded main file for task %s to %s", req.task_id, main_key)
         license_key = None
         if license_link:
             license_path = await download_to_tmp(license_link, 'lic')
             license_key = upload_to_s3(license_path, f"{asset_id}/license")
+            logger.info("Uploaded license file for task %s to %s", req.task_id, license_key)
         return {
             'taskId': req.task_id,
             'mainFileKey': main_key,
@@ -111,6 +119,17 @@ async def process(req: ProcessRequest):
     except Exception as e:
         logger.exception('Processing failed')
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        try:
+            if 'main_path' in locals() and os.path.exists(main_path):
+                os.remove(main_path)
+        except Exception as cle:
+            logger.warning("Failed to remove %s: %s", main_path, cle)
+        try:
+            if 'license_path' in locals() and os.path.exists(license_path):
+                os.remove(license_path)
+        except Exception as cle:
+            logger.warning("Failed to remove %s: %s", license_path, cle)
 
 if __name__ == '__main__':
     import uvicorn

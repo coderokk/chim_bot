@@ -28,6 +28,8 @@ pip install -r requirements.txt
 python app.py
 ```
 
+`PORT` can be set to specify the listening port (default 8000).
+
 ## Worker
 
 Environment variables required:
@@ -39,6 +41,7 @@ PY_SERVICE_URL       # URL of the FastAPI service (default http://localhost:8000
 AWS_REGION           # AWS region for SQS and DynamoDB
 S3_ENDPOINT_URL, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET_NAME
 S3_REGION_NAME
+MAX_RETRIES        # number of attempts before marking a task FAILED (default 3)
 ```
 
 Run with:
