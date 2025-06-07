@@ -2,12 +2,14 @@
 
 This repository contains a simplified example of integrating a Telegram
 processing service with an AWS SQS queue and DynamoDB table. It consists of two
-components written in Python:
+components written in Python, plus an optional Java implementation of the worker:
 
 * `service/` – a FastAPI application that communicates with a Telegram bot,
   downloads the resulting files, and uploads them to a configured S3 bucket.
-* `worker/` – a small worker that polls an SQS queue for tasks, updates their
-  status in DynamoDB, and calls the FastAPI service.
+* `worker/` – a small Python worker that polls an SQS queue for tasks, updates
+  their status in DynamoDB, and calls the FastAPI service.
+* `java-worker/` – an alternative Java implementation of the worker using AWS
+  SDK v2. It performs the same logic as the Python worker.
 
 ## Service
 
@@ -60,3 +62,16 @@ This code is a minimal working example and may require further adjustments for
 production usage. The worker checks Yandex S3 for existing assets before
 invoking the Telegram service. If files are already present, the task is marked
 `COMPLETED` immediately.
+
+## Java Worker
+
+If you prefer using Java, the `java-worker` module contains a simple
+implementation using the AWS SDK v2. Build and run with Maven:
+
+```bash
+cd java-worker
+mvn package
+java -jar target/envato-worker-1.0-SNAPSHOT.jar
+```
+
+Environment variables are the same as for the Python worker.

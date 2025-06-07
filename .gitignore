@@ -7,3 +7,6 @@ __pycache__/
 
 # Temporary downloads
 service/tmp/
+# Java build
+java-worker/target/
+*.class
