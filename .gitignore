@@ -1,0 +1,9 @@
+# Python caches
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+
+# Temporary downloads
+service/tmp/

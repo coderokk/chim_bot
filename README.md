@@ -11,7 +11,8 @@ components written in Python:
 
 ## Service
 
-Environment variables required:
+The applications read configuration from environment variables (you can copy
+`.env.example` to `.env` and adjust values). Environment variables required:
 
 ```
 API_ID, API_HASH, SESSION_STRING      # Telegram credentials
@@ -43,6 +44,9 @@ S3_ENDPOINT_URL, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET_NAME
 S3_REGION_NAME
 MAX_RETRIES        # number of attempts before marking a task FAILED (default 3)
 ```
+
+Copy `.env.example` to `.env` in the project root and set these variables before
+running the worker.
 
 Run with:
 
