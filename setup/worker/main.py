@@ -11,17 +11,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Проверка обязательных переменных
 SQS_QUEUE_URL = os.getenv('RESOURCE_QUEUE_URL')
 DDB_TABLE = os.getenv('TASK_STATE_TABLE')
+if not DDB_TABLE:
+    raise RuntimeError("TASK_STATE_TABLE не задана в .env")
+if not SQS_QUEUE_URL:
+    raise RuntimeError("RESOURCE_QUEUE_URL не задана в .env")
+
 SERVICE_URL = os.getenv('PY_SERVICE_URL', 'http://localhost:8000/process')
 MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
+AWS_REGION = os.getenv('AWS_REGION', 'eu-central-1')
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('worker')
 
-sqs = boto3.client('sqs', region_name=os.getenv('AWS_REGION', 'eu-central-1'))
-ddb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'eu-central-1'))
-table = ddb.Table(DDB_TABLE)
+# Инициализация AWS клиентов
+sqs = boto3.client('sqs', region_name=AWS_REGION)
+ddb_resource = boto3.resource('dynamodb', region_name=AWS_REGION)
+table = ddb_resource.Table(DDB_TABLE)
 s3 = boto3.client('s3',
                    endpoint_url=os.getenv('S3_ENDPOINT_URL'),
                    aws_access_key_id=os.getenv('S3_ACCESS_KEY_ID'),
